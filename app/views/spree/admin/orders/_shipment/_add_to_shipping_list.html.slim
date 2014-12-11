@@ -1,0 +1,19 @@
+span class="shipment-number"
+  = shipment.number
+| &nbsp;-&nbsp;
+span class="shipment-state"
+  = Spree.t("shipment_states.#{shipment.state}")
+| &nbsp;-&nbsp;
+= Spree.t(:package_from)
+| :&nbsp;
+strong class="stock-location-name" data-hook="stock-location-name"
+  = shipment.stock_location.name
+| &nbsp;-&nbsp;
+- if can? :update, shipment
+  - if shipment.ready_for_fulfillment?
+    = link_to 'Znalezione', '#', :class => 'fulfill button fa fa-arrow-right', :data => {'shipment-number' => shipment.number}
+  - elsif shipment.shipping_list.present?
+    = link_to 'Zobacz listę', admin_shipping_list_path(shipment.shipping_list), :class => 'show-shipping-list button fa fa-arrow-right'
+
+
+
