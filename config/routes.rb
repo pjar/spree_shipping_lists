@@ -7,6 +7,7 @@ Spree::Core::Engine.routes.draw do
 
     namespace :admin do
       resources :shipping_lists
+      resource :shipping_labels, only: [:create, :show]
     end
 
 end

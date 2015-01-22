@@ -42,20 +42,27 @@
        col style="width: 17%;"
     thead
       tr data-hook="admin_products_index_headers"
-        th= Spree.t(:sku) 
-        th colspan="2"
-          = sort_link @search,:created_at, Spree.t(:created_at), { :default_order => "desc" }, {:title => 'admin_products_listing_name_title'}
-        th= sort_link @search,:id, Spree.t(:id), {}, {:title => 'admin_products_listing_price_title'}
+        th= Spree.t(:shipping_method) 
+        th= Spree.t(:order_number) 
+        th= sort_link @search,:created_at, Spree.t(:created_at), { :default_order => "desc" }, {:title => 'admin_products_listing_name_title'}
+        th= Spree.t(:tracking) 
         th data-hook="admin_products_index_header_actions" class="actions"
     tbody
       - @collection.each do |item|
         tr id="#{ spree_dom_id item }" data-hook="admin_products_index_rows" class="#{cycle('odd', 'even') }"
-          td class="align-center"
-            = item.shipment.number rescue '' 
           td
-            = link_to item.shipment.shipping_method.try(:name), '#'
+            = item.shipment.shipping_method.try(:name)
           td class="align-center"
-            = item.shipment.cost.to_html rescue ''
+            = link_to item.shipment.order.number, edit_admin_order_path(item.shipment.order.number)
+          td class="align-center"
+            = item.shipment.order.created_at
+          td class="align-center"
+            - if item.label && item.label.image && item.label.image.attachment?
+              = link_to item.label.tracking_number, item.label.image.attachment.url(:original)
+            - else
+              = form_for [:admin, item.build_label] do |label|
+                = label.hidden_field :list_item_id
+                = label.submit 'Dawaj tracking'
           td class="actions" data-hook="admin_products_index_row_actions"
             = link_to_edit item, :no_text => true, :class => 'edit' if can?(:edit, item.shipment)
             | &nbsp;

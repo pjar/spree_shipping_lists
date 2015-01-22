@@ -1,13 +1,11 @@
+span class='shipment-label'
+  = Spree.t('shipment')
+| &nbsp;-&nbsp;
 span class="shipment-number"
   = shipment.number
 | &nbsp;-&nbsp;
 span class="shipment-state"
   = Spree.t("shipment_states.#{shipment.state}")
-| &nbsp;-&nbsp;
-= Spree.t(:package_from)
-| :&nbsp;
-strong class="stock-location-name" data-hook="stock-location-name"
-  = shipment.stock_location.name
 | &nbsp;-&nbsp;
 - if can? :update, shipment
   - if shipment.ready_for_fulfillment?
