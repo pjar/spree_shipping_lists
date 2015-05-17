@@ -6,7 +6,7 @@ module Spree
 
       def create
         shipping_list_item = ShippingListItem.find(params[:shipping_label][:list_item_id])
-        if ShippingLabelService.new.label_created?(shipping_list_item)
+        if ShippingLabelService.label_created?(shipping_list_item)
           flash[:success] = "OK - label created"
           redirect_to admin_shipping_list_path(shipping_list_item.list)
         else

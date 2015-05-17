@@ -1,10 +1,13 @@
 module Spree
   class ShippingLabelService
 
-    UPS_SERVICE_CODE = 11
-    UPS_SERVICE_DESCRIPTION = 'Standard'
-
     attr_reader :carrier
+
+    def self.label_created?(shipping_list_item)
+      label_type = shipping_list_item.shipment.shipping_method.name.titleize
+      "Spree::#{label_type}Label::#{label_type}LabelService".constantize.
+        new.label_created?(shipping_list_item)
+    end
 
     def initialize
       setup_carrier
@@ -21,21 +24,11 @@ module Spree
     end
 
     def process_label(shipping_list_item)
-      response = label_response(shipping_list_item).labels.first
-      tracking_number = response[:tracking_number]
-      base64_image = response[:image]['GraphicImage']
-
-      create_label_attachment(tracking_number, base64_image)    
-    rescue => e
-      raise "Something wrong with label => #{e}"
+      raise NotImplementedError.new('You have to implement #shipping_list_item')
     end
 
-    def create_label(tracking_number, base64_encoded_image)
-      label = shipping_list_item.create_label!(tracking_number: tracking_number)
-      working_image = Paperclip.io_adapters.for("data:image/gif;base64,#{base64_encoded_image}")
-      working_image.original_filename = "label#{tracking_number}.gif"
-      label.create_image!(attachment: working_image)
-      label
+    def create_label_attachment(shipping_list_item, tracking_number, base64_encoded_image)
+      raise NotImplementedError.new('You have to implement #create_label_attachment')
     end
 
     def label_created?(shipping_list_item)
@@ -47,19 +40,28 @@ module Spree
 
     def build_location(address)
       default_fields = {
-        :country   => address.country.iso,
-        :state     => fetch_best_state_from_address(address),
-        :city      => address.city,
-        :zip       => address.zipcode,
+        :phone     => address.phone,
         :address1  => address.address1,
         :address2  => address.address2,
+        :city      => address.city,
+        :zip       => address.zipcode,
+        :state     => fetch_best_state_from_address(address),
+        :country   => address.country.iso,
       }
 
-      if [:company, :firstname, :lastname].all?{ |field| address.respond_to?(field) }
-        default_fields.merge!(:name => "#{address.company}    #{address.firstname} #{address.lastname}")
+      if [:firstname, :lastname].all?{ |field| address.respond_to?(field) }
+        default_fields.merge!(:name => "#{address.firstname} #{address.lastname}")
       end
 
-      ActiveMerchant::Shipping::Location.new(default_fields)
+      address_type = nil
+      if address.respond_to?(:company)
+        address_type = address.company == 'Paczkomaty' ? 'po_box' : address.company.present? ? 'commercial' : 'residential'
+        default_fields.merge!(company_name: address.company)
+      else
+        address_type = 'commercial' # for origins
+      end
+
+      ActiveMerchant::Shipping::Location.new(default_fields.merge({address_type: address_type}))
     end
 
     def fetch_best_state_from_address address
@@ -67,24 +69,7 @@ module Spree
     end
 
     def setup_carrier
-      carrier_details = {
-        :login => Spree::ActiveShipping::Config[:ups_login],
-        :password => Spree::ActiveShipping::Config[:ups_password],
-        :key => Spree::ActiveShipping::Config[:ups_key],
-        :test => Spree::ActiveShipping::Config[:test_mode]
-      }
-
-      if shipper_number = Spree::ActiveShipping::Config[:shipper_number]
-        carrier_details.merge!(:origin_account => shipper_number)
-      end
-
-      required_shipper_name = Spree::ActiveShipping::Config[:shipper_name].to_str
-      carrier_details.merge!(origin_name: required_shipper_name)
-
-      carrier_details.merge!(service_code: UPS_SERVICE_CODE)
-      carrier_details.merge!(service_description: UPS_SERVICE_DESCRIPTION)
-
-      @carrier = ActiveMerchant::Shipping::UPS.new(carrier_details)
+      raise NotImplementedError.new('You have to implement #setup_carrier')
     end
   end
 end
