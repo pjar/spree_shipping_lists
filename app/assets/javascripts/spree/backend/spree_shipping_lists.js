@@ -8,6 +8,7 @@ $(document).ready(function () {
     var shipment_number = link.data('shipment-number');
     var url = Spree.url(Spree.routes.fulfillments_api + '/' + shipment_number + '/start.json');
     $.ajax({
+      data: {token: Spree.api_key},
       type: 'PUT',
       url: url
     }).done(function () {
