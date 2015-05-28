@@ -4,7 +4,7 @@ module Spree
     attr_reader :carrier
 
     def self.label_created?(shipping_list_item)
-      label_type = shipping_list_item.shipment.shipping_method.name.titleize
+      label_type = shipping_list_item.shipment.shipping_method.code.titleize
       "Spree::#{label_type}Label::#{label_type}LabelService".constantize.
         new.label_created?(shipping_list_item)
     end
